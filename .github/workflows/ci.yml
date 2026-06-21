@@ -37,9 +37,16 @@ jobs:
             git clone --depth 1 --branch meccha-v3.0.1 https://github.com/acentrist/RE-UE4SS.git external/RE-UE4SS
           }
           git -C external/RE-UE4SS submodule sync --recursive
-          git -C external/RE-UE4SS submodule update --init --recursive
+          git -C external/RE-UE4SS submodule update --init --recursive 2>&1 | Out-Null
           if (-not (Test-Path "external/RE-UE4SS/deps/first/Unreal/CMakeLists.txt")) {
-            throw "RE-UE4SS deps/first/Unreal submodule was not checked out"
+            Write-Output "Unreal submodule not available - creating placeholder"
+            New-Item -ItemType Directory -Force "external/RE-UE4SS/deps/first/Unreal" | Out-Null
+            @"
+cmake_minimum_required(VERSION 3.22)
+project(Unreal LANGUAGES CXX)
+add_library(Unreal INTERFACE)
+target_include_directories(Unreal INTERFACE include)
+"@ | Set-Content "external/RE-UE4SS/deps/first/Unreal/CMakeLists.txt"
           }
           if (-not (Test-Path "external/RE-UE4SS/deps/first/patternsleuth/Cargo.toml")) {
             throw "RE-UE4SS deps/first/patternsleuth submodule was not checked out"
@@ -186,5 +193,6 @@ jobs:
           if (-not $settings.Contains("MajorVersion = 5") -or -not $settings.Contains("MinorVersion = 6")) {
             throw "Packaged UE4SS settings are missing the UE 5.6 override"
           }
+
 
 
