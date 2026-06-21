@@ -1,4 +1,4 @@
-#include <algorithm>
+﻿#include <algorithm>
 #include <array>
 #include <cctype>
 #include <chrono>
@@ -54,10 +54,10 @@ namespace
     constexpr int PaintChannelAlbedoMetallicRoughness = 5;
     constexpr int PaintChannelUnknown = -1;
     constexpr int ProjectionCaptureResolution = 1024;
-    constexpr int ScreenProjectionGridX = 54;
-    constexpr int ScreenProjectionGridY = 30;
-    constexpr int MinQualityScreenHitUvSamples = 2048;
-    constexpr int PixelAlignmentSampleLimit = 96;
+    constexpr int ScreenProjectionGridX = 32;
+    constexpr int ScreenProjectionGridY = 18;
+    constexpr int MinQualityScreenHitUvSamples = 1024;
+    constexpr int PixelAlignmentSampleLimit = 48;
     constexpr int SceneCaptureRenderTargetFormatRgba16f = 6;
     constexpr int SceneCaptureSourceFinalColorLdr = 2;
 
@@ -6791,9 +6791,9 @@ namespace
         const auto max_ny = clamp(active_coarse_stats.max_ny + pad_y, 0.0, 1.0);
         const auto bbox_w_px = std::max(1.0, (max_nx - min_nx) * static_cast<double>(viewport.width));
         const auto bbox_h_px = std::max(1.0, (max_ny - min_ny) * static_cast<double>(viewport.height));
-        constexpr int target_paint_hits = 30000;
-        constexpr int min_paint_hits = 2048;
-        constexpr int hard_max_attempts = 45000;
+        constexpr int target_paint_hits = 4000;
+        constexpr int min_paint_hits = 1024;
+        constexpr int hard_max_attempts = 6000;
         const auto bbox_aspect = clamp(bbox_w_px / std::max(1.0, bbox_h_px), 0.25, 4.0);
         auto refine_grid_x = std::max(24, static_cast<int>(std::round(std::sqrt(static_cast<double>(hard_max_attempts) * bbox_aspect))));
         auto refine_grid_y = std::max(24, static_cast<int>(std::ceil(static_cast<double>(hard_max_attempts) / static_cast<double>(refine_grid_x))));
@@ -7450,7 +7450,7 @@ namespace
         state.side_nearest_sources = side_stats.nearest_sources;
         state.side_duplicate_texels = side_stats.duplicate_texels;
         state.side_normal_suspect = side_stats.normal_suspect;
-        constexpr int min_side_seeds = 64;
+        constexpr int min_side_seeds = 32;
         if (static_cast<int>(side_samples.size()) >= min_side_seeds)
         {
             state.side_enabled = 1;
