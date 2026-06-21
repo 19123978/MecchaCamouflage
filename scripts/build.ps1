@@ -38,25 +38,39 @@ function Resolve-ToolPath([string]$ExplicitPath, [string]$CommandName, [string[]
     if ($ExplicitPath) {
         return $ExplicitPath
     }
-    $Command = Get-Command $CommandName -ErrorAction SilentlyContinue
-    if ($Command) {
-        return $Command.Source
-    }
     foreach ($Candidate in $Candidates) {
         if ($Candidate -and (Test-Path $Candidate)) {
             return $Candidate
         }
     }
+    $Command = Get-Command $CommandName -ErrorAction SilentlyContinue
+    if ($Command) {
+        return $Command.Source
+    }
     return ""
+}
+
+function Resolve-RustToolPath([string]$ExplicitPath, [string]$RustupToolName, [string]$CommandName, [string[]]$Candidates) {
+    if ($ExplicitPath) {
+        return $ExplicitPath
+    }
+    $Rustup = Get-Command "rustup.exe" -ErrorAction SilentlyContinue
+    if ($Rustup) {
+        $RustupPath = (& $Rustup.Source which $RustupToolName 2>$null)
+        if ($LASTEXITCODE -eq 0 -and $RustupPath -and (Test-Path $RustupPath)) {
+            return $RustupPath
+        }
+    }
+    return Resolve-ToolPath "" $CommandName $Candidates
 }
 
 $RustupBin = Join-Path $env:USERPROFILE ".rustup\toolchains\stable-x86_64-pc-windows-msvc\bin"
 $CargoBin = Join-Path $env:USERPROFILE ".cargo\bin"
-$RustCompiler = Resolve-ToolPath $RustCompiler "rustc.exe" @(
+$RustCompiler = Resolve-RustToolPath $RustCompiler "rustc" "rustc.exe" @(
     (Join-Path $RustupBin "rustc.exe"),
     (Join-Path $CargoBin "rustc.exe")
 )
-$RustCargo = Resolve-ToolPath $RustCargo "cargo.exe" @(
+$RustCargo = Resolve-RustToolPath $RustCargo "cargo" "cargo.exe" @(
     (Join-Path $RustupBin "cargo.exe"),
     (Join-Path $CargoBin "cargo.exe")
 )
