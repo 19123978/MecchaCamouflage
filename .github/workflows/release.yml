@@ -1,4 +1,4 @@
-name: Release
+﻿name: Release
 
 on:
   push:
@@ -22,10 +22,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup SSH for private UEPseudo submodule
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.UEPSEUDO_DEPLOY_KEY }}
+      - name: Configure git for HTTPS submodules
+        run: git config --global url."https://github.com/".insteadOf git@github.com:
 
       - name: Cache RE-UE4SS source
         uses: actions/cache@v4
@@ -190,3 +188,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*.zip
+
