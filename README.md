@@ -10,8 +10,7 @@
 
 Mod for [MECCHA CHAMELEON](https://store.steampowered.com/app/4704690/).
 
-Download v1.0.0:
-https://github.com/acentrist/MecchaCamouflage/releases/tag/v1.0.0
+[Download the latest release](https://github.com/acentrist/MecchaCamouflage/releases/latest).
 
 Open the MECCHA CHAMELEON Steam game folder, then extract the release zip into:
 
