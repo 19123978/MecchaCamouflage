@@ -5927,7 +5927,7 @@ namespace
         constexpr int grid_y = 36;
         std::unordered_set<std::uint64_t> unique_side_texels{};
         unique_side_texels.reserve(8192);
-        side_samples.reserve(16384);
+        side_samples.reserve(32768);
 
         const auto encode_texel = [](double u, double v) -> std::uint64_t {
             const auto x = static_cast<std::uint64_t>(std::max(0, std::min(4095, static_cast<int>(u * 4096.0))));
@@ -5955,6 +5955,46 @@ namespace
             }
             return best;
         };
+
+        constexpr size_t centerline_bin_count = 96;
+        std::array<const ResolvedSurfaceSeed*, centerline_bin_count> centerline_bins{};
+        std::array<double, centerline_bin_count> centerline_scores{};
+        centerline_scores.fill(1000000000000.0);
+        double min_up = 1000000000000.0;
+        double max_up = -1000000000000.0;
+        for (const auto& seed : direct_seeds)
+        {
+            const auto delta = sub(seed.world_position, center);
+            const auto up_delta = dot(delta, frame.up);
+            min_up = std::min(min_up, up_delta);
+            max_up = std::max(max_up, up_delta);
+        }
+        const auto up_span = std::max(1.0, max_up - min_up);
+        for (const auto& seed : direct_seeds)
+        {
+            const auto delta = sub(seed.world_position, center);
+            const auto right_delta = dot(delta, frame.right);
+            const auto up_delta = dot(delta, frame.up);
+            const auto forward_delta = dot(delta, frame.forward);
+            const auto normalized_up = clamp((up_delta - min_up) / up_span, 0.0, 0.999999);
+            const auto bin = std::min(centerline_bin_count - 1,
+                                      static_cast<size_t>(normalized_up * static_cast<double>(centerline_bin_count)));
+            const auto score = std::abs(right_delta) + std::abs(forward_delta) * 0.04;
+            if (score < centerline_scores[bin])
+            {
+                centerline_scores[bin] = score;
+                centerline_bins[bin] = &seed;
+            }
+        }
+        std::vector<const ResolvedSurfaceSeed*> centerline_targets{};
+        centerline_targets.reserve(centerline_bin_count);
+        for (auto* seed : centerline_bins)
+        {
+            if (seed)
+            {
+                centerline_targets.push_back(seed);
+            }
+        }
 
         const auto try_add_side_ray = [&](const Unreal::FVector& origin, const Unreal::FVector& ray_dir) -> void {
             ++stats.attempts;
@@ -6110,7 +6150,7 @@ namespace
                     }
                 }
 
-                constexpr int direct_target_rays_per_view = 512;
+                constexpr int direct_target_rays_per_view = 1024;
                 const auto seed_count = direct_seeds.size();
                 const auto stride = std::max<size_t>(1, seed_count / static_cast<size_t>(direct_target_rays_per_view));
                 const auto view_offset = (virtual_view_index * 131u) % std::max<size_t>(1, seed_count);
@@ -6126,6 +6166,49 @@ namespace
                     try_add_side_ray(origin_center, ray_dir);
                 }
                 ++virtual_view_index;
+            }
+        }
+
+        const std::array<double, 5> centerline_yaw_offsets{{-45.0, -30.0, 0.0, 30.0, 45.0}};
+        const std::array<double, 3> centerline_pitch_offsets{{-38.0, 0.0, 38.0}};
+        const std::array<std::array<double, 2>, 5> centerline_jitter{{
+            {{0.0, 0.0}},
+            {{4.0, 0.0}},
+            {{-4.0, 0.0}},
+            {{0.0, 5.0}},
+            {{0.0, -5.0}},
+        }};
+        for (const auto yaw : centerline_yaw_offsets)
+        {
+            for (const auto pitch : centerline_pitch_offsets)
+            {
+                if (state.cancelled)
+                {
+                    return side_samples;
+                }
+                const auto outward = normalize(rotate_yaw_pitch(base_outward, yaw, pitch));
+                const auto origin_center = add(center, mul(outward, ray_distance));
+                const auto view_forward = normalize(sub(center, origin_center));
+                auto view_right = normalize(cross(vec(0.0, 0.0, 1.0), view_forward));
+                if (length(view_right) < 0.01)
+                {
+                    view_right = frame.right;
+                }
+                auto view_up = normalize(cross(view_forward, view_right));
+                if (length(view_up) < 0.01)
+                {
+                    view_up = vec(0.0, 0.0, 1.0);
+                }
+                for (const auto* target_seed : centerline_targets)
+                {
+                    for (const auto& jitter : centerline_jitter)
+                    {
+                        const auto target = add(add(target_seed->world_position, mul(view_right, jitter[0])),
+                                                mul(view_up, jitter[1]));
+                        const auto ray_dir = normalize(sub(target, origin_center));
+                        try_add_side_ray(origin_center, ray_dir);
+                    }
+                }
             }
         }
 
@@ -7434,7 +7517,7 @@ namespace
                     sample.color.metallic},
                 sample.floor_like,
                 sample.floor_like ? 8 : 7,
-                3,
+                5,
                 sample.floor_like ? 48.0 : 42.0});
         }
         const auto assembled_texture = MecchaCamouflage::Core::assemble_direct_texture(
