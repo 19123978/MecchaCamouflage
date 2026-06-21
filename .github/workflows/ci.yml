@@ -110,13 +110,18 @@ jobs:
             "THIRD_PARTY_NOTICES.md",
             "UE4SS_LICENSE.txt",
             "dwmapi.dll",
-            "ue4ss/UE4SS.dll",
-            "ue4ss/UE4SS-settings.ini",
-            "ue4ss/Mods/mods.txt",
-            "ue4ss/Mods/MecchaCamouflage/dlls/main.dll"
+            "UE4SS.dll",
+            "UE4SS-settings.ini",
+            "Mods/mods.txt",
+            "Mods/MecchaCamouflage/dlls/main.dll"
           )
           $missing = Compare-Object $expected $entries | Where-Object { $_.SideIndicator -eq "<=" }
           if ($missing) {
             $missing | ForEach-Object { Write-Host $_ }
             throw "Missing package entries"
+          }
+          $unexpected = Compare-Object $expected $entries | Where-Object { $_.SideIndicator -eq "=>" }
+          if ($unexpected) {
+            $unexpected | ForEach-Object { Write-Host $_ }
+            throw "Unexpected package entries"
           }

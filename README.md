@@ -34,14 +34,13 @@ C:\Program Files (x86)\Steam\steamapps\common\MECCHA CHAMELEON\
     Binaries\
       Win64\
         dwmapi.dll
-        ue4ss\
-          UE4SS.dll
-          UE4SS-settings.ini
-          Mods\
-            mods.txt
-            MecchaCamouflage\
-              dlls\
-                main.dll
+        UE4SS.dll
+        UE4SS-settings.ini
+        Mods\
+          mods.txt
+          MecchaCamouflage\
+            dlls\
+              main.dll
 ```
 
 PowerShell install:

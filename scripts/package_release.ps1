@@ -66,8 +66,8 @@ foreach ($RelativePath in @(
 $PackageName = "meccha-camouflage-$Version"
 $Stage = Join-Path $OutDir $PackageName
 $Win64Root = $Stage
-$UE4SSRoot = Join-Path $Win64Root "ue4ss"
-$ModsRoot = Join-Path $UE4SSRoot "Mods"
+$UE4SSRoot = $Win64Root
+$ModsRoot = Join-Path $Win64Root "Mods"
 $ModDllDir = Join-Path $ModsRoot "$ModName\dlls"
 
 Remove-Item -Recurse -Force $Stage -ErrorAction SilentlyContinue
@@ -75,7 +75,7 @@ New-Item -ItemType Directory -Force -Path $ModDllDir | Out-Null
 
 Copy-Item -Force $DllFile.FullName (Join-Path $ModDllDir "main.dll")
 Copy-Item -Force $Dwmapi (Join-Path $Win64Root "dwmapi.dll")
-Copy-Item -Force $UE4SSDll (Join-Path $UE4SSRoot "UE4SS.dll")
+Copy-Item -Force $UE4SSDll (Join-Path $Win64Root "UE4SS.dll")
 Copy-Item -Force (Join-Path $RepoRoot "README.md") (Join-Path $Stage "README.md")
 Copy-Item -Force (Join-Path $RepoRoot "LICENSE.txt") (Join-Path $Stage "LICENSE.txt")
 
