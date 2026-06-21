@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure git for HTTPS submodules
-        run: git config --global url."https://github.com/".insteadOf git@github.com:
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Cache RE-UE4SS source
         uses: actions/cache@v4
@@ -186,4 +186,5 @@ jobs:
           if (-not $settings.Contains("MajorVersion = 5") -or -not $settings.Contains("MinorVersion = 6")) {
             throw "Packaged UE4SS settings are missing the UE 5.6 override"
           }
+
 
